@@ -1,0 +1,22 @@
+{
+  "name": "orama-swift",
+  "version": "1.0.0",
+  "description": "Swift bindings for Orama, a full-text search engine written in TypeScript.",
+  "module": "Sources/OramaSwift/Resources/index.js",
+  "scripts": {
+    "build": "tsup",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Simon Liang <simon@botisan.ai>",
+  "license": "MIT",
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.4",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3"
+  },
+  "volta": {
+    "node": "22.16.0",
+    "pnpm": "10.12.2"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "[swift]": {
+    "editor.indentSize": 4,
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "sweetpad.sweetpad"
+  }
+}
