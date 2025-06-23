@@ -4,6 +4,7 @@ import JavaScriptCore
 public class OramaSwift {
     private let jsContext: JSContext
     private var orama: JSValue
+    private var db: JSValue?
 
     public init() throws {
         guard let jsContext = JSContext() else {
@@ -26,11 +27,62 @@ public class OramaSwift {
         let jsCode = try String(contentsOf: jsURL, encoding: .utf8)
         jsContext.evaluateScript(jsCode)
 
-        guard let orama = jsContext.objectForKeyedSubscript("Orama") else {
+        guard let orama = jsContext.objectForKeyedSubscript("orama") else {
             throw OramaSwiftError.jsExecutionError("Failed to find OramaSwift in JavaScript context")
         }
 
         self.orama = orama
+    }
+
+    public func dbInitialized() -> Bool {
+        return db != nil
+    }
+
+    public func clear() throws {
+        if !dbInitialized() {
+            throw OramaSwiftError.databaseNotInitialized
+        }
+
+        // set db to undefined in JS context
+        jsContext.setObject(JSValue(undefinedIn: jsContext), forKeyedSubscript: "db" as NSString)
+        db = nil
+    }
+
+    public func create(options: [AnyHashable: Any]) throws {
+        if dbInitialized() {
+            throw OramaSwiftError.databaseAlreadyInitialized
+        }
+
+        guard let db = orama.invokeMethod("create", withArguments: [options]) else {
+            throw OramaSwiftError.jsExecutionError("Failed to create database")
+        }
+
+        jsContext.setObject(db, forKeyedSubscript: "db" as NSString)
+        self.db = db
+    }
+
+    public func insert(_ doc: [AnyHashable: Any]) throws {
+        guard let db = db else {
+            throw OramaSwiftError.databaseNotInitialized
+        }
+
+        orama.invokeMethod("insert", withArguments: [db, doc])
+    }
+
+    public func search(_ query: [AnyHashable: Any]) throws -> [AnyHashable: Any] {
+        guard let db = db else {
+            throw OramaSwiftError.databaseNotInitialized
+        }
+
+        guard let result = orama.invokeMethod("search", withArguments: [db, query]) else {
+            throw OramaSwiftError.jsExecutionError("Failed to execute search")
+        }
+
+        guard let resultDict = result.toDictionary() else {
+            throw OramaSwiftError.jsExecutionError("Failed to convert search result to dictionary")
+        }
+
+        return resultDict
     }
 
     public func helloWorld() throws -> String {
@@ -81,12 +133,43 @@ public class OramaSwift {
             promise?.invokeMethod("then", withArguments: promiseArgs)
         }
     }
+
+    public func persist() throws -> String {
+        guard let db = db else {
+            throw OramaSwiftError.databaseNotInitialized
+        }
+
+        guard let result = orama.invokeMethod("persist", withArguments: [db]) else {
+            throw OramaSwiftError.jsExecutionError("Failed to persist data")
+        }
+
+        guard let resultString = result.toString() else {
+            throw OramaSwiftError.jsExecutionError("Failed to convert persistData result to string")
+        }
+
+        return resultString
+    }
+
+    public func restore(dataString: String) throws {
+        if dbInitialized() {
+            throw OramaSwiftError.databaseAlreadyInitialized
+        }
+
+        guard let restoredDb = orama.invokeMethod("restore", withArguments: [dataString]) else {
+            throw OramaSwiftError.jsExecutionError("Failed to restore data")
+        }
+
+        jsContext.setObject(restoredDb, forKeyedSubscript: "db" as NSString)
+        self.db = restoredDb
+    }
 }
 
 public enum OramaSwiftError: Error {
     case failedToCreateJSContext
     case bundleNotFound
     case jsFileNotFound
+    case databaseNotInitialized
+    case databaseAlreadyInitialized
     case jsExecutionError(String)
 
     public var localizedDescription: String {
@@ -97,6 +180,10 @@ public enum OramaSwiftError: Error {
             return "Bundle not found"
         case .jsFileNotFound:
             return "JavaScript file not found in bundle resources"
+        case .databaseNotInitialized:
+            return "Database is not initialized"
+        case .databaseAlreadyInitialized:
+            return "Database already initialized"
         case .jsExecutionError(let message):
             return "JavaScript execution error: \(message)"
         }

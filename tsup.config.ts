@@ -9,5 +9,5 @@ export default defineConfig((options) => ({
   sourcemap: true,
   clean: true,
   dts: true,
-  globalName: 'Orama',
+  globalName: 'orama',
 }));

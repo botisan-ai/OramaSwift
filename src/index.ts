@@ -1,3 +1,13 @@
+import { create, insert, search } from '@orama/orama';
+
+import { persist, restore } from './persistence';
+
+export { create, insert, search, persist, restore };
+
+// this file is loaded into a JSContext in JavaScriptCore
+// so we will keep the database inside the global scope in this context
+// and use these methods to interact with it
+
 export function helloWorld(): string {
   return "Hello World";
 }
