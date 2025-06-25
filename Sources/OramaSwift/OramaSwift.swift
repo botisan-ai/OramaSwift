@@ -2,20 +2,20 @@ import Foundation
 import JavaScriptCore
 
 public struct ElapsedTime {
-    var raw: Double
-    var formatted: String
+    public var raw: Double
+    public var formatted: String
 }
 
 public struct OramaSearchResult {
-    var id: String
-    var score: Double
-    var document: [AnyHashable: Any]
+    public var id: String
+    public var score: Double
+    public var document: [AnyHashable: Any]
 }
 
 public struct OramaSearchResults {
-    var count: Int
-    var elapsed: ElapsedTime
-    var hits: [OramaSearchResult]
+    public var count: Int
+    public var elapsed: ElapsedTime
+    public var hits: [OramaSearchResult]
 
     // TODO: faceted search results and group results
 }
