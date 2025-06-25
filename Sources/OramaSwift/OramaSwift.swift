@@ -18,6 +18,10 @@ public struct OramaSearchResults {
     public var hits: [OramaSearchResult]
 
     // TODO: faceted search results and group results
+
+    public static func emptyResults() -> OramaSearchResults {
+        return OramaSearchResults(count: 0, elapsed: ElapsedTime(raw: 0, formatted: "0s"), hits: [])
+    }
 }
 
 public class OramaSwift {
