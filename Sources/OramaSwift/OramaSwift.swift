@@ -85,6 +85,34 @@ public class OramaSwift {
         return resultDict
     }
 
+    public func getByID(_ id: String) throws ->  [AnyHashable: Any] {
+        guard let db = db else {
+            throw OramaSwiftError.databaseNotInitialized
+        }
+
+        guard let result = orama.invokeMethod("getByID", withArguments: [db, id]) else {
+            throw OramaSwiftError.jsExecutionError("Failed to execute getByID")
+        }
+
+        guard let resultDict = result.toDictionary() else {
+            throw OramaSwiftError.jsExecutionError("Failed to convert getByID result to dictionary")
+        }
+
+        return resultDict
+    }
+
+    public func count() throws -> Int {
+        guard let db = db else {
+            throw OramaSwiftError.databaseNotInitialized
+        }
+
+        guard let result = orama.invokeMethod("count", withArguments: [db]) else {
+            throw OramaSwiftError.jsExecutionError("Failed to execute count")
+        }
+
+        return Int(result.toInt32())
+    }
+
     public func helloWorld() throws -> String {
         guard let helloWorld = orama.objectForKeyedSubscript("helloWorld") else {
             throw OramaSwiftError.jsExecutionError(

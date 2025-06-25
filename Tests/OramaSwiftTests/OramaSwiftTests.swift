@@ -2,16 +2,10 @@ import Testing
 
 @testable import OramaSwift
 
-@Test func testHelloWorld() async throws {
+@Test func testHelloWorld() throws {
     let orama = try OramaSwift()
     let result = try orama.helloWorld()
     #expect(result == "Hello World")
-}
-
-@Test func testOramaSwiftInitialization() async throws {
-    // Test that OramaSwift can be initialized without throwing
-    let orama = try OramaSwift()
-    #expect(orama != nil)
 }
 
 @available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
@@ -21,7 +15,13 @@ import Testing
     #expect(result == "Hello World")
 }
 
-@Test func testCreateDatabase() async throws {
+@Test func testOramaSwiftInitialization() throws {
+    // Test that OramaSwift can be initialized without throwing
+    let orama = try OramaSwift()
+    #expect(orama != nil)
+}
+
+@Test func testCreateDatabase() throws {
     let orama = try OramaSwift()
 
     // Define a simple schema
@@ -39,7 +39,7 @@ import Testing
     #expect(orama.dbInitialized() == true)
 }
 
-@Test func testClearDatabase() async throws {
+@Test func testClearDatabase() throws {
     let orama = try OramaSwift()
 
     // Define a simple schema
@@ -63,7 +63,7 @@ import Testing
     #expect(orama.dbInitialized() == false)
 }
 
-@Test func testInsertAndSearch() async throws {
+@Test func testInsertAndSearch() throws {
     let orama = try OramaSwift()
 
     // Define a simple schema
@@ -104,7 +104,7 @@ import Testing
 }
 
 @available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
-@Test func testPersistData() async throws {
+@Test func testPersistData() throws {
     let orama = try OramaSwift()
 
     // Define a simple schema
@@ -140,7 +140,7 @@ import Testing
     #expect(!persistedData.isEmpty)
 }
 
-@Test func testPersistAndRestore() async throws {
+@Test func testPersistAndRestore() throws {
     // First, create a database and add some data
     let orama1 = try OramaSwift()
 
@@ -188,4 +188,72 @@ import Testing
 
     // Verify that the search result contains the restored documents
     #expect(result["count"] as? Int == 2)
+}
+
+@Test func testGetByID() throws {
+    let orama = try OramaSwift()
+
+    // Define a simple schema
+    let options: [String: Any] = [
+        "schema": [
+            "id": "string",
+            "title": "string",
+            "content": "string",
+        ]
+    ]
+
+    // Create the database
+    try orama.create(options: options)
+
+    // Insert a document
+    let doc: [String: Any] = [
+        "id": "12345",
+        "title": "Test Document",
+        "content": "This is a test document",
+    ]
+    try orama.insert(doc)
+
+    // Get the document by ID
+    let result = try orama.getByID("12345")
+
+    print(result)
+
+    // Verify that the result matches the inserted document
+    #expect(result["title"] as? String == "Test Document")
+}
+
+@Test func testCount() throws {
+    let orama = try OramaSwift()
+
+    // Define a simple schema
+    let options: [String: Any] = [
+        "schema": [
+            "title": "string",
+            "content": "string",
+        ]
+    ]
+
+    // Create the database
+    try orama.create(options: options)
+
+    // Insert some documents
+    let doc1: [String: Any] = [
+        "title": "Document 1",
+        "content": "This is the first document",
+    ]
+    try orama.insert(doc1)
+
+    let doc2: [String: Any] = [
+        "title": "Document 2",
+        "content": "This is the second document",
+    ]
+    try orama.insert(doc2)
+
+    // Count the documents in the database
+    let count = try orama.count()
+
+    print("Document count:", count)
+
+    // Verify that the count matches the number of inserted documents
+    #expect(count == 2)
 }
