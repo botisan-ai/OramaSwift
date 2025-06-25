@@ -1,6 +1,25 @@
 import Foundation
 import JavaScriptCore
 
+public struct ElapsedTime {
+    var raw: Double
+    var formatted: String
+}
+
+public struct OramaSearchResult {
+    var id: String
+    var score: Double
+    var document: [AnyHashable: Any]
+}
+
+public struct OramaSearchResults {
+    var count: Int
+    var elapsed: ElapsedTime
+    var hits: [OramaSearchResult]
+
+    // TODO: faceted search results and group results
+}
+
 public class OramaSwift {
     private let jsContext: JSContext
     private var orama: JSValue
@@ -69,20 +88,49 @@ public class OramaSwift {
         orama.invokeMethod("insert", withArguments: [db, doc])
     }
 
-    public func search(_ query: [AnyHashable: Any]) throws -> [AnyHashable: Any] {
+    public func search(_ query: [AnyHashable: Any]) throws -> OramaSearchResults {
         guard let db = db else {
             throw OramaSwiftError.databaseNotInitialized
         }
 
-        guard let result = orama.invokeMethod("search", withArguments: [db, query]) else {
+        guard let results = orama.invokeMethod("search", withArguments: [db, query]) else {
             throw OramaSwiftError.jsExecutionError("Failed to execute search")
         }
 
-        guard let resultDict = result.toDictionary() else {
+        guard let resultsDict = results.toDictionary() else {
             throw OramaSwiftError.jsExecutionError("Failed to convert search result to dictionary")
         }
 
-        return resultDict
+        guard let count = resultsDict["count"] as? Int else {
+            throw OramaSwiftError.jsExecutionError("Invalid search result format")
+        }
+
+        guard let elapsedDict = resultsDict["elapsed"] as? [AnyHashable: Any] else {
+            throw OramaSwiftError.jsExecutionError("Invalid elapsed time format in search result")
+        }
+
+        guard let elapsedRaw = elapsedDict["raw"] as? Double,
+              let elapsedFormatted = elapsedDict["formatted"] as? String else {
+            throw OramaSwiftError.jsExecutionError("Invalid elapsed time format in search result")
+        }
+
+        let elapsedTime = ElapsedTime(raw: elapsedRaw, formatted: elapsedFormatted)
+
+        guard let hitsArray = resultsDict["hits"] as? [[AnyHashable: Any]] else {
+            throw OramaSwiftError.jsExecutionError("Invalid hits format in search result")
+        }
+
+        let hits = hitsArray.compactMap { hitDict -> OramaSearchResult? in
+            guard let id = hitDict["id"] as? String,
+                  let score = hitDict["score"] as? Double,
+                  let document = hitDict["document"] as? [AnyHashable: Any] else {
+                return nil
+            }
+
+            return OramaSearchResult(id: id, score: score, document: document)
+        }
+
+        return OramaSearchResults(count: count, elapsed: elapsedTime, hits: hits)
     }
 
     public func getByID(_ id: String) throws ->  [AnyHashable: Any] {
@@ -112,6 +160,37 @@ public class OramaSwift {
 
         return Int(result.toInt32())
     }
+
+    public func persist() throws -> String {
+        guard let db = db else {
+            throw OramaSwiftError.databaseNotInitialized
+        }
+
+        guard let result = orama.invokeMethod("persist", withArguments: [db]) else {
+            throw OramaSwiftError.jsExecutionError("Failed to persist data")
+        }
+
+        guard let resultString = result.toString() else {
+            throw OramaSwiftError.jsExecutionError("Failed to convert persistData result to string")
+        }
+
+        return resultString
+    }
+
+    public func restore(dataString: String) throws {
+        if dbInitialized() {
+            throw OramaSwiftError.databaseAlreadyInitialized
+        }
+
+        guard let restoredDb = orama.invokeMethod("restore", withArguments: [dataString]) else {
+            throw OramaSwiftError.jsExecutionError("Failed to restore data")
+        }
+
+        jsContext.setObject(restoredDb, forKeyedSubscript: "db" as NSString)
+        self.db = restoredDb
+    }
+
+    //  MARK: - Example JavaScript Function Calls
 
     public func helloWorld() throws -> String {
         guard let helloWorld = orama.objectForKeyedSubscript("helloWorld") else {
@@ -160,35 +239,6 @@ public class OramaSwift {
             let promise = orama.objectForKeyedSubscript("helloWorldAsync").call(withArguments: [])
             promise?.invokeMethod("then", withArguments: promiseArgs)
         }
-    }
-
-    public func persist() throws -> String {
-        guard let db = db else {
-            throw OramaSwiftError.databaseNotInitialized
-        }
-
-        guard let result = orama.invokeMethod("persist", withArguments: [db]) else {
-            throw OramaSwiftError.jsExecutionError("Failed to persist data")
-        }
-
-        guard let resultString = result.toString() else {
-            throw OramaSwiftError.jsExecutionError("Failed to convert persistData result to string")
-        }
-
-        return resultString
-    }
-
-    public func restore(dataString: String) throws {
-        if dbInitialized() {
-            throw OramaSwiftError.databaseAlreadyInitialized
-        }
-
-        guard let restoredDb = orama.invokeMethod("restore", withArguments: [dataString]) else {
-            throw OramaSwiftError.jsExecutionError("Failed to restore data")
-        }
-
-        jsContext.setObject(restoredDb, forKeyedSubscript: "db" as NSString)
-        self.db = restoredDb
     }
 }
 

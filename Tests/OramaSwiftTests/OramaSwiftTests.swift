@@ -100,7 +100,7 @@ import Testing
     print(result)
 
     // Verify that the search result contains the inserted document
-    #expect(result["count"] as? Int == 1)
+    #expect(result.count == 1)
 }
 
 @available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
@@ -187,7 +187,7 @@ import Testing
     print("Restore test result:", result)
 
     // Verify that the search result contains the restored documents
-    #expect(result["count"] as? Int == 2)
+    #expect(result.count == 2)
 }
 
 @Test func testGetByID() throws {
