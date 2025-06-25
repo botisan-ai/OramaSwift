@@ -22,7 +22,9 @@ var orama = (() => {
   // src/index.ts
   var index_exports = {};
   __export(index_exports, {
+    count: () => count2,
     create: () => create4,
+    getByID: () => getByID,
     helloWorld: () => helloWorld,
     helloWorldAsync: () => helloWorldAsync,
     insert: () => insert3,
@@ -3483,6 +3485,9 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
   }
 
   // node_modules/@orama/orama/dist/esm/methods/docs.js
+  function getByID(db, id) {
+    return db.documentsStore.get(db.data.docs, id);
+  }
   function count2(db) {
     return db.documentsStore.count(db.data.docs);
   }

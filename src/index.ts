@@ -1,8 +1,8 @@
-import { create, insert, search } from '@orama/orama';
+import { count, create, getByID, insert, search } from "@orama/orama";
 
-import { persist, restore } from './persistence';
+import { persist, restore } from "./persistence";
 
-export { create, insert, search, persist, restore };
+export { create, insert, search, getByID, count, persist, restore };
 
 // this file is loaded into a JSContext in JavaScriptCore
 // so we will keep the database inside the global scope in this context

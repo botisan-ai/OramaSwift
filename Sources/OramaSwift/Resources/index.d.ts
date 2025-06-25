@@ -1,5 +1,5 @@
 import { AnyOrama } from '@orama/orama';
-export { create, insert, search } from '@orama/orama';
+export { count, create, getByID, insert, search } from '@orama/orama';
 
 declare function persist(db: AnyOrama): string;
 declare function restore(data: string): AnyOrama;
