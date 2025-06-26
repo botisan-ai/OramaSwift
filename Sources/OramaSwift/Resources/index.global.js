@@ -3,7 +3,6 @@ var orama = (() => {
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
   var __getOwnPropNames = Object.getOwnPropertyNames;
   var __hasOwnProp = Object.prototype.hasOwnProperty;
-  var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __export = (target, all) => {
     for (var name in all)
       __defProp(target, name, { get: all[name], enumerable: true });
@@ -17,13 +16,13 @@ var orama = (() => {
     return to;
   };
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-  var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
   // src/index.ts
   var index_exports = {};
   __export(index_exports, {
     count: () => count2,
     create: () => create4,
+    createMultilingual: () => createMultilingual,
     getByID: () => getByID,
     helloWorld: () => helloWorld,
     helloWorldAsync: () => helloWorldAsync,
@@ -781,12 +780,12 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
 
   // node_modules/@orama/orama/dist/esm/trees/avl.js
   var AVLNode = class _AVLNode {
+    k;
+    v;
+    l = null;
+    r = null;
+    h = 1;
     constructor(key, value) {
-      __publicField(this, "k");
-      __publicField(this, "v");
-      __publicField(this, "l", null);
-      __publicField(this, "r", null);
-      __publicField(this, "h", 1);
       this.k = key;
       this.v = new Set(value);
     }
@@ -833,9 +832,9 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
     }
   };
   var AVLTree = class _AVLTree {
+    root = null;
+    insertCount = 0;
     constructor(key, value) {
-      __publicField(this, "root", null);
-      __publicField(this, "insertCount", 0);
       if (key !== void 0 && value !== void 0) {
         this.root = new AVLNode(key, value);
       }
@@ -1133,8 +1132,8 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
 
   // node_modules/@orama/orama/dist/esm/trees/flat.js
   var FlatTree = class _FlatTree {
+    numberToDocumentId;
     constructor() {
-      __publicField(this, "numberToDocumentId");
       this.numberToDocumentId = /* @__PURE__ */ new Map();
     }
     insert(key, value) {
@@ -1320,19 +1319,19 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
 
   // node_modules/@orama/orama/dist/esm/trees/radix.js
   var RadixNode = class _RadixNode {
+    // Node key
+    k;
+    // Node subword
+    s;
+    // Node children
+    c = /* @__PURE__ */ new Map();
+    // Node documents
+    d = /* @__PURE__ */ new Set();
+    // Node end
+    e;
+    // Node word
+    w = "";
     constructor(key, subWord, end) {
-      // Node key
-      __publicField(this, "k");
-      // Node subword
-      __publicField(this, "s");
-      // Node children
-      __publicField(this, "c", /* @__PURE__ */ new Map());
-      // Node documents
-      __publicField(this, "d", /* @__PURE__ */ new Set());
-      // Node end
-      __publicField(this, "e");
-      // Node word
-      __publicField(this, "w", "");
       this.k = key;
       this.s = subWord;
       this.e = end;
@@ -1654,12 +1653,12 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
   var K = 2;
   var EARTH_RADIUS = 6371e3;
   var BKDNode = class _BKDNode {
+    point;
+    docIDs;
+    left;
+    right;
+    parent;
     constructor(point, docIDs) {
-      __publicField(this, "point");
-      __publicField(this, "docIDs");
-      __publicField(this, "left");
-      __publicField(this, "right");
-      __publicField(this, "parent");
       this.point = point;
       this.docIDs = new Set(docIDs);
       this.left = null;
@@ -1687,9 +1686,9 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
     }
   };
   var BKDTree = class _BKDTree {
+    root;
+    nodeMap;
     constructor() {
-      __publicField(this, "root");
-      __publicField(this, "nodeMap");
       this.root = null;
       this.nodeMap = /* @__PURE__ */ new Map();
     }
@@ -1974,9 +1973,9 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
 
   // node_modules/@orama/orama/dist/esm/trees/bool.js
   var BoolNode = class _BoolNode {
+    true;
+    false;
     constructor() {
-      __publicField(this, "true");
-      __publicField(this, "false");
       this.true = /* @__PURE__ */ new Set();
       this.false = /* @__PURE__ */ new Set();
     }
@@ -2020,9 +2019,9 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
   // node_modules/@orama/orama/dist/esm/trees/vector.js
   var DEFAULT_SIMILARITY = 0.8;
   var VectorIndex = class _VectorIndex {
+    size;
+    vectors = /* @__PURE__ */ new Map();
     constructor(size) {
-      __publicField(this, "size");
-      __publicField(this, "vectors", /* @__PURE__ */ new Map());
       this.size = size;
     }
     add(internalDocumentId, value) {
@@ -3429,9 +3428,9 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
       throw createError("NO_LANGUAGE_WITH_CUSTOM_TOKENIZER");
     }
     const internalDocumentStore = createInternalDocumentIDStore();
-    index || (index = createIndex());
-    sorter || (sorter = createSorter());
-    documentsStore || (documentsStore = createDocumentsStore());
+    index ||= createIndex();
+    sorter ||= createSorter();
+    documentsStore ||= createDocumentsStore();
     validateComponents(components);
     const { getDocumentProperties: getDocumentProperties2, getDocumentIndexId: getDocumentIndexId2, validateSchema: validateSchema2, formatElapsedTime: formatElapsedTime2 } = components;
     const orama = {
@@ -4278,7 +4277,94 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
     return db;
   }
 
+  // src/intl-segmenter.ts
+  var BREAK_TYPES = {
+    grapheme: 0,
+    word: 1,
+    sentence: 3
+  };
+  var getSegmentType = (type) => {
+    if (type < 100) {
+      return "none";
+    } else if (type >= 100 && type < 200) {
+      return "number";
+    } else if (type >= 200 && type < 300) {
+      return "word";
+    } else if (type >= 300 && type < 400) {
+      return "kana";
+    } else if (type >= 400 && type < 500) {
+      return "ideo";
+    }
+  };
+  var IntlSegmenter = class {
+    constructor(breakIterator, locale, options = {
+      granularity: "grapheme"
+    }) {
+      this.breakIterator = breakIterator;
+      this.locale = locale;
+      this.options = options;
+    }
+    segment(input) {
+      const locale = this.locale;
+      const granularity = this.options.granularity || "grapheme";
+      const result = this.breakIterator.utf8BreakIteratorWithBreakTypeLocaleTextToBreak(
+        BREAK_TYPES[granularity],
+        locale,
+        input
+      );
+      let index = 0;
+      const segments = result.map(({ start, end, type }) => {
+        const segment = input.slice(start, end);
+        const returnValue = {
+          segment,
+          index,
+          isWordLike: granularity === "word" ? getSegmentType(type) !== "none" : void 0,
+          breakType: granularity === "word" ? getSegmentType(type) : void 0
+        };
+        index += segment.length;
+        return returnValue;
+      });
+      return segments;
+    }
+  };
+
+  // src/tokenizer.ts
+  function intlSegmenterTokenizer(config) {
+    const segmenters = config.languages.map(
+      (language) => new IntlSegmenter(config.breakIterator, language, {
+        granularity: "word"
+      })
+    );
+    return {
+      language: "",
+      normalizationCache: /* @__PURE__ */ new Map(),
+      tokenize: (raw, language, prop, withCache) => {
+        const words = [];
+        for (const segmenter of segmenters) {
+          const segments = segmenter.segment(raw);
+          for (const segment of segments) {
+            if (segment.isWordLike) {
+              words.push(segment.segment);
+            }
+          }
+        }
+        return words;
+      }
+    };
+  }
+
   // src/index.ts
+  function createMultilingual(breakIterator, schema, languages) {
+    return create4({
+      schema,
+      components: {
+        tokenizer: intlSegmenterTokenizer({
+          languages,
+          breakIterator
+        })
+      }
+    });
+  }
   function helloWorld() {
     return "Hello World";
   }

@@ -27,6 +27,7 @@ public struct OramaSearchResults {
 public class OramaSwift {
     private let jsContext: JSContext
     private var orama: JSValue
+    private var breakIterator: JSValue
     private var db: JSValue?
 
     public init() throws {
@@ -55,6 +56,29 @@ public class OramaSwift {
         }
 
         self.orama = orama
+
+        jsContext.setObject(BreakIterator.self, forKeyedSubscript: "BreakIterator" as NSString)
+
+        guard let breakIteratorClass = jsContext.objectForKeyedSubscript("BreakIterator") else {
+            throw OramaSwiftError.jsExecutionError("Failed to find BreakIterator class in JavaScript context")
+        }
+
+        print(breakIteratorClass)
+
+        guard let breakIterator = breakIteratorClass.invokeMethod("create", withArguments: []) else {
+            throw OramaSwiftError.jsExecutionError("Failed to create BreakIterator instance")
+        }
+
+        print(breakIterator)
+
+        jsContext.setObject(breakIterator, forKeyedSubscript: "breakIterator" as NSString)
+        self.breakIterator = breakIterator
+
+        // guard let result = breakIterator.invokeMethod("utf8BreakIteratorWithBreakTypeLocaleTextToBreak", withArguments: [Int32(1), "zh", "中国北京"]) else {
+        //     throw OramaSwiftError.jsExecutionError("Failed to invoke utf8BreakIterator method")
+        // }
+
+        // print(result)
     }
 
     public func dbInitialized() -> Bool {
@@ -78,6 +102,25 @@ public class OramaSwift {
 
         guard let db = orama.invokeMethod("create", withArguments: [options]) else {
             throw OramaSwiftError.jsExecutionError("Failed to create database")
+        }
+
+        jsContext.setObject(db, forKeyedSubscript: "db" as NSString)
+        self.db = db
+    }
+
+    public func createMultilingual(schema: [AnyHashable: Any], languages: [String]) throws {
+        if dbInitialized() {
+            throw OramaSwiftError.databaseAlreadyInitialized
+        }
+
+        guard let createMultilingual = orama.objectForKeyedSubscript("createMultilingual") else {
+            throw OramaSwiftError.jsExecutionError("Failed to find createMultilingual function in JavaScript context")
+        }
+
+        print(createMultilingual)
+
+        guard let db = createMultilingual.call(withArguments: [breakIterator, schema, languages]) else {
+            throw OramaSwiftError.jsExecutionError("Failed to create multilingual database")
         }
 
         jsContext.setObject(db, forKeyedSubscript: "db" as NSString)

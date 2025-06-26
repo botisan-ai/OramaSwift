@@ -1,10 +1,27 @@
-import { AnyOrama } from '@orama/orama';
+import { AnyOrama, AnySchema } from '@orama/orama';
 export { count, create, getByID, insert, search } from '@orama/orama';
 
 declare function persist(db: AnyOrama): string;
 declare function restore(data: string): AnyOrama;
 
+interface BreakIteratorResult {
+    start: number;
+    end: number;
+    type: number;
+}
+interface BreakIterator {
+    utf8BreakIteratorWithBreakTypeLocaleTextToBreak: (breakType: number, locale: string, textToBreak: string) => BreakIteratorResult[];
+}
+
+/**
+ * Creates a new Orama instance with the provided schema and multilingual support.
+ *
+ * @param schema - The schema to use for the Orama instance.
+ * @param languages - An array of language codes to support multilingual tokenization (ISO 639-1 codes).
+ * @returns A new Orama instance configured with the provided schema and tokenizer.
+ */
+declare function createMultilingual(breakIterator: BreakIterator, schema: AnySchema, languages: string[]): AnyOrama;
 declare function helloWorld(): string;
 declare function helloWorldAsync(): Promise<string>;
 
-export { helloWorld, helloWorldAsync, persist, restore };
+export { createMultilingual, helloWorld, helloWorldAsync, persist, restore };

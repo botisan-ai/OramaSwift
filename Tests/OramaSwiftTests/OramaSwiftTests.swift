@@ -257,3 +257,52 @@ import Testing
     // Verify that the count matches the number of inserted documents
     #expect(count == 2)
 }
+
+@Test func testMultilingual() throws {
+    let orama = try OramaSwift()
+
+    // Define a simple schema
+    let schema: [AnyHashable: Any] = [
+        "city": "string",
+    ]
+
+    let languages: [String] = ["es", "en", "zh"]
+
+    // Create the database
+    try orama.createMultilingual(schema: schema, languages: languages)
+
+    // Insert documents in different languages
+    let doc1: [String: Any] = [
+        "city": "Barcelona, España",
+    ]
+    try orama.insert(doc1)
+
+    let doc2: [String: Any] = [
+        "city": "New York, United States",
+    ]
+    try orama.insert(doc2)
+
+    let doc3: [String: Any] = [
+        "city": "中国北京",
+    ]
+    try orama.insert(doc3)
+
+    // Search for documents in different languages
+    let querySpanish: [String: Any] = ["term": "España"]
+    let resultSpanish = try orama.search(querySpanish)
+    
+    let queryEnglish: [String: Any] = ["term": "United"]
+    let resultEnglish = try orama.search(queryEnglish)
+    
+    let queryChinese: [String: Any] = ["term": "北京"]
+    let resultChinese = try orama.search(queryChinese)
+
+    print("Spanish Result:", resultSpanish)
+    print("English Result:", resultEnglish)
+    print("Chinese Result:", resultChinese)
+
+    // Verify that the search results contain the respective documents
+    #expect(resultSpanish.count == 1)
+    #expect(resultEnglish.count == 1)
+    #expect(resultChinese.count == 1)
+}
