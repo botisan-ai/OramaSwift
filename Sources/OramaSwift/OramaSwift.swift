@@ -63,13 +63,9 @@ public class OramaSwift {
             throw OramaSwiftError.jsExecutionError("Failed to find BreakIterator class in JavaScript context")
         }
 
-        print(breakIteratorClass)
-
         guard let breakIterator = breakIteratorClass.invokeMethod("create", withArguments: []) else {
             throw OramaSwiftError.jsExecutionError("Failed to create BreakIterator instance")
         }
-
-        print(breakIterator)
 
         jsContext.setObject(breakIterator, forKeyedSubscript: "breakIterator" as NSString)
         self.breakIterator = breakIterator
@@ -117,14 +113,29 @@ public class OramaSwift {
             throw OramaSwiftError.jsExecutionError("Failed to find createMultilingual function in JavaScript context")
         }
 
-        print(createMultilingual)
-
         guard let db = createMultilingual.call(withArguments: [breakIterator, schema, languages]) else {
             throw OramaSwiftError.jsExecutionError("Failed to create multilingual database")
         }
 
         jsContext.setObject(db, forKeyedSubscript: "db" as NSString)
         self.db = db
+    }
+
+    public func restoreMultilingual(dataString: String, languages: [String]) throws {
+        if dbInitialized() {
+            throw OramaSwiftError.databaseAlreadyInitialized
+        }
+
+        guard let restoreMultilingual = orama.objectForKeyedSubscript("restoreMultilingual") else {
+            throw OramaSwiftError.jsExecutionError("Failed to find restoreMultilingual function in JavaScript context")
+        }
+
+        guard let restoredDb = restoreMultilingual.call(withArguments: [breakIterator, languages, dataString]) else {
+            throw OramaSwiftError.jsExecutionError("Failed to restore multilingual database")
+        }
+
+        jsContext.setObject(restoredDb, forKeyedSubscript: "db" as NSString)
+        self.db = restoredDb
     }
 
     public func insert(_ doc: [AnyHashable: Any]) throws -> String {

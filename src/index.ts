@@ -1,11 +1,43 @@
-import type { AnyOrama, AnySchema } from "@orama/orama";
-import { count, create, getByID, insert, remove, search } from "@orama/orama";
+import {
+  type AnyOrama,
+  type AnySchema,
+  count,
+  create,
+  getByID,
+  insert,
+  load,
+  remove,
+  save,
+  search,
+} from "@orama/orama";
 
-import { persist, restore } from "./persistence";
 import { intlSegmenterTokenizer } from "./tokenizer";
 import type { BreakIterator } from "./intl-segmenter";
 
-export { create, insert, remove, search, getByID, count, persist, restore };
+export { create, insert, remove, search, getByID, count };
+
+// this file is based off  the @orama/plugin-data-persistence plugin
+// but stripped down to just the JSON serialization and deserialization
+
+export function persist(db: AnyOrama): string {
+  const dbExport = save(db);
+  const serialized = JSON.stringify(dbExport);
+  return serialized;
+}
+
+export function restore(data: string): AnyOrama {
+  const db = create({
+    schema: {
+      __placeholder: "string",
+    },
+  });
+
+  const deserialized = JSON.parse(data);
+
+  load(db, deserialized);
+
+  return db;
+}
 
 // this file is loaded into a JSContext in JavaScriptCore
 // so we will keep the database inside the global scope in this context
@@ -18,7 +50,11 @@ export { create, insert, remove, search, getByID, count, persist, restore };
  * @param languages - An array of language codes to support multilingual tokenization (ISO 639-1 codes).
  * @returns A new Orama instance configured with the provided schema and tokenizer.
  */
-export function createMultilingual(breakIterator: BreakIterator, schema: AnySchema, languages: string[]): AnyOrama {
+export function createMultilingual(
+  breakIterator: BreakIterator,
+  schema: AnySchema,
+  languages: string[],
+): AnyOrama {
   return create({
     schema,
     components: {
@@ -29,6 +65,32 @@ export function createMultilingual(breakIterator: BreakIterator, schema: AnySche
     },
   });
 }
+
+export function restoreMultilingual(
+  breakIterator: BreakIterator,
+  languages: string[],
+  data: string,
+): AnyOrama {
+  const db = create({
+    schema: {
+      __placeholder: "string",
+    },
+    components: {
+      tokenizer: intlSegmenterTokenizer({
+        languages,
+        breakIterator,
+      }),
+    },
+  });
+
+  const deserialized = JSON.parse(data);
+
+  load(db, deserialized);
+
+  return db;
+}
+
+// keeping sample methods just to show how JavaScriptCore works
 
 export function helloWorld(): string {
   return "Hello World";

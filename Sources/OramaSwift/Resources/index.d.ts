@@ -1,9 +1,6 @@
 import { AnyOrama, AnySchema } from '@orama/orama';
 export { count, create, getByID, insert, remove, search } from '@orama/orama';
 
-declare function persist(db: AnyOrama): string;
-declare function restore(data: string): AnyOrama;
-
 interface BreakIteratorResult {
     start: number;
     end: number;
@@ -13,6 +10,8 @@ interface BreakIterator {
     utf8BreakIteratorWithBreakTypeLocaleTextToBreak: (breakType: number, locale: string, textToBreak: string) => BreakIteratorResult[];
 }
 
+declare function persist(db: AnyOrama): string;
+declare function restore(data: string): AnyOrama;
 /**
  * Creates a new Orama instance with the provided schema and multilingual support.
  *
@@ -21,7 +20,8 @@ interface BreakIterator {
  * @returns A new Orama instance configured with the provided schema and tokenizer.
  */
 declare function createMultilingual(breakIterator: BreakIterator, schema: AnySchema, languages: string[]): AnyOrama;
+declare function restoreMultilingual(breakIterator: BreakIterator, languages: string[], data: string): AnyOrama;
 declare function helloWorld(): string;
 declare function helloWorldAsync(): Promise<string>;
 
-export { createMultilingual, helloWorld, helloWorldAsync, persist, restore };
+export { createMultilingual, helloWorld, helloWorldAsync, persist, restore, restoreMultilingual };

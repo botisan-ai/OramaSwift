@@ -30,6 +30,7 @@ var orama = (() => {
     persist: () => persist,
     remove: () => remove4,
     restore: () => restore,
+    restoreMultilingual: () => restoreMultilingual,
     search: () => search2
   });
 
@@ -4354,23 +4355,6 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
   var kInsertions = Symbol("orama.insertions");
   var kRemovals = Symbol("orama.removals");
 
-  // src/persistence.ts
-  function persist(db) {
-    const dbExport = save5(db);
-    const serialized = JSON.stringify(dbExport);
-    return serialized;
-  }
-  function restore(data) {
-    const db = create4({
-      schema: {
-        __placeholder: "string"
-      }
-    });
-    const deserialized = JSON.parse(data);
-    load5(db, deserialized);
-    return db;
-  }
-
   // src/intl-segmenter.ts
   var BREAK_TYPES = {
     grapheme: 0,
@@ -4448,6 +4432,21 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
   }
 
   // src/index.ts
+  function persist(db) {
+    const dbExport = save5(db);
+    const serialized = JSON.stringify(dbExport);
+    return serialized;
+  }
+  function restore(data) {
+    const db = create4({
+      schema: {
+        __placeholder: "string"
+      }
+    });
+    const deserialized = JSON.parse(data);
+    load5(db, deserialized);
+    return db;
+  }
   function createMultilingual(breakIterator, schema, languages) {
     return create4({
       schema,
@@ -4458,6 +4457,22 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
         })
       }
     });
+  }
+  function restoreMultilingual(breakIterator, languages, data) {
+    const db = create4({
+      schema: {
+        __placeholder: "string"
+      },
+      components: {
+        tokenizer: intlSegmenterTokenizer({
+          languages,
+          breakIterator
+        })
+      }
+    });
+    const deserialized = JSON.parse(data);
+    load5(db, deserialized);
+    return db;
   }
   function helloWorld() {
     return "Hello World";
