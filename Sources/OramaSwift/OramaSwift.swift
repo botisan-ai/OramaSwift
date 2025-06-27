@@ -127,12 +127,20 @@ public class OramaSwift {
         self.db = db
     }
 
-    public func insert(_ doc: [AnyHashable: Any]) throws {
+    public func insert(_ doc: [AnyHashable: Any]) throws -> String {
         guard let db = db else {
             throw OramaSwiftError.databaseNotInitialized
         }
 
-        orama.invokeMethod("insert", withArguments: [db, doc])
+        return orama.invokeMethod("insert", withArguments: [db, doc]).toString()
+    }
+
+    public func remove(_ id: String) throws {
+        guard let db = db else {
+            throw OramaSwiftError.databaseNotInitialized
+        }
+
+        orama.invokeMethod("remove", withArguments: [db, id])
     }
 
     public func search(_ query: [AnyHashable: Any]) throws -> OramaSearchResults {

@@ -1,11 +1,11 @@
 import type { AnyOrama, AnySchema } from "@orama/orama";
-import { count, create, getByID, insert, search } from "@orama/orama";
+import { count, create, getByID, insert, remove, search } from "@orama/orama";
 
 import { persist, restore } from "./persistence";
 import { intlSegmenterTokenizer } from "./tokenizer";
 import type { BreakIterator } from "./intl-segmenter";
 
-export { create, insert, search, getByID, count, persist, restore };
+export { create, insert, remove, search, getByID, count, persist, restore };
 
 // this file is loaded into a JSContext in JavaScriptCore
 // so we will keep the database inside the global scope in this context

@@ -28,6 +28,7 @@ var orama = (() => {
     helloWorldAsync: () => helloWorldAsync,
     insert: () => insert3,
     persist: () => persist,
+    remove: () => remove4,
     restore: () => restore,
     search: () => search2
   });
@@ -3620,6 +3621,99 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
       const expectedType = orama.sorter.getSortablePropertiesWithTypes(orama.data.sorting)[prop];
       orama.sorter.insert(orama.data.sorting, prop, id, value, expectedType, language);
     }
+  }
+
+  // node_modules/@orama/orama/dist/esm/methods/remove.js
+  function remove4(orama, id, language, skipHooks) {
+    const asyncNeeded = isAsyncFunction(orama.index.beforeRemove) || isAsyncFunction(orama.index.remove) || isAsyncFunction(orama.index.afterRemove);
+    if (asyncNeeded) {
+      return removeAsync(orama, id, language, skipHooks);
+    }
+    return removeSync(orama, id, language, skipHooks);
+  }
+  async function removeAsync(orama, id, language, skipHooks) {
+    let result = true;
+    const { index, docs } = orama.data;
+    const doc = orama.documentsStore.get(docs, id);
+    if (!doc) {
+      return false;
+    }
+    const internalId = getInternalDocumentId(orama.internalDocumentIDStore, id);
+    const docId = getDocumentIdFromInternalId(orama.internalDocumentIDStore, internalId);
+    const docsCount = orama.documentsStore.count(docs);
+    if (!skipHooks) {
+      await runSingleHook(orama.beforeRemove, orama, docId);
+    }
+    const indexableProperties = orama.index.getSearchableProperties(index);
+    const indexablePropertiesWithTypes = orama.index.getSearchablePropertiesWithTypes(index);
+    const values = orama.getDocumentProperties(doc, indexableProperties);
+    for (const prop of indexableProperties) {
+      const value = values[prop];
+      if (typeof value === "undefined") {
+        continue;
+      }
+      const schemaType = indexablePropertiesWithTypes[prop];
+      await orama.index.beforeRemove?.(orama.data.index, prop, docId, value, schemaType, language, orama.tokenizer, docsCount);
+      if (!await orama.index.remove(orama.index, orama.data.index, prop, id, internalId, value, schemaType, language, orama.tokenizer, docsCount)) {
+        result = false;
+      }
+      await orama.index.afterRemove?.(orama.data.index, prop, docId, value, schemaType, language, orama.tokenizer, docsCount);
+    }
+    const sortableProperties = await orama.sorter.getSortableProperties(orama.data.sorting);
+    const sortableValues = await orama.getDocumentProperties(doc, sortableProperties);
+    for (const prop of sortableProperties) {
+      if (typeof sortableValues[prop] === "undefined") {
+        continue;
+      }
+      orama.sorter.remove(orama.data.sorting, prop, id);
+    }
+    if (!skipHooks) {
+      await runSingleHook(orama.afterRemove, orama, docId);
+    }
+    orama.documentsStore.remove(orama.data.docs, id, internalId);
+    return result;
+  }
+  function removeSync(orama, id, language, skipHooks) {
+    let result = true;
+    const { index, docs } = orama.data;
+    const doc = orama.documentsStore.get(docs, id);
+    if (!doc) {
+      return false;
+    }
+    const internalId = getInternalDocumentId(orama.internalDocumentIDStore, id);
+    const docId = getDocumentIdFromInternalId(orama.internalDocumentIDStore, internalId);
+    const docsCount = orama.documentsStore.count(docs);
+    if (!skipHooks) {
+      runSingleHook(orama.beforeRemove, orama, docId);
+    }
+    const indexableProperties = orama.index.getSearchableProperties(index);
+    const indexablePropertiesWithTypes = orama.index.getSearchablePropertiesWithTypes(index);
+    const values = orama.getDocumentProperties(doc, indexableProperties);
+    for (const prop of indexableProperties) {
+      const value = values[prop];
+      if (typeof value === "undefined") {
+        continue;
+      }
+      const schemaType = indexablePropertiesWithTypes[prop];
+      orama.index.beforeRemove?.(orama.data.index, prop, docId, value, schemaType, language, orama.tokenizer, docsCount);
+      if (!orama.index.remove(orama.index, orama.data.index, prop, id, internalId, value, schemaType, language, orama.tokenizer, docsCount)) {
+        result = false;
+      }
+      orama.index.afterRemove?.(orama.data.index, prop, docId, value, schemaType, language, orama.tokenizer, docsCount);
+    }
+    const sortableProperties = orama.sorter.getSortableProperties(orama.data.sorting);
+    const sortableValues = orama.getDocumentProperties(doc, sortableProperties);
+    for (const prop of sortableProperties) {
+      if (typeof sortableValues[prop] === "undefined") {
+        continue;
+      }
+      orama.sorter.remove(orama.data.sorting, prop, id);
+    }
+    if (!skipHooks) {
+      runSingleHook(orama.afterRemove, orama, docId);
+    }
+    orama.documentsStore.remove(orama.data.docs, id, internalId);
+    return result;
   }
 
   // node_modules/@orama/orama/dist/esm/constants.js

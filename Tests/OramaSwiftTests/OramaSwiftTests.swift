@@ -306,3 +306,37 @@ import Testing
     #expect(resultEnglish.count == 1)
     #expect(resultChinese.count == 1)
 }
+
+@Test func testRemove() throws {
+    let orama = try OramaSwift()
+
+    // Define a simple schema
+    let options: [String: Any] = [
+        "schema": [
+            "title": "string",
+            "content": "string",
+        ]
+    ]
+
+    // Create the database
+    try orama.create(options: options)
+
+    // Insert a document
+    let doc: [String: Any] = [
+        "title": "Document to Remove",
+        "content": "This document will be removed",
+    ]
+    let docId = try orama.insert(doc)
+
+    // Verify that the document exists
+    let query: [String: Any] = ["term": "Remove"]
+    let initialResult = try orama.search(query)
+    #expect(initialResult.count == 1)
+
+    // Remove the document
+    try orama.remove(docId)
+
+    // Verify that the document has been removed
+    let finalResult = try orama.search(query)
+    #expect(finalResult.count == 0)
+}
