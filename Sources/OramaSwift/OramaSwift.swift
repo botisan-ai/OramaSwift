@@ -43,7 +43,7 @@ public class OramaSwift {
 
         guard
             let jsURL = Bundle.module.url(
-                forResource: "index.global", withExtension: "js", subdirectory: "Resources")
+                forResource: "index.global", withExtension: "js", subdirectory: "JavaScript")
         else {
             throw OramaSwiftError.jsFileNotFound
         }

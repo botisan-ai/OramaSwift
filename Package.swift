@@ -29,7 +29,7 @@ let package = Package(
         .product(name: "WasmInterpreter", package: "wasm-interpreter-apple")
       ],
       resources: [
-        .copy("Resources"),
+        .copy("JavaScript"),
         .copy("Wasm")
       ]),
     .testTarget(
