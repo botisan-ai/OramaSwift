@@ -33,7 +33,7 @@ export function intlSegmenterTokenizer(
         const segments = segmenter.segment(raw);
         for (const segment of segments) {
           if (segment.isWordLike) {
-            words.push(segment.segment);
+            words.push(segment.segment.toLocaleLowerCase());
           }
         }
       }
