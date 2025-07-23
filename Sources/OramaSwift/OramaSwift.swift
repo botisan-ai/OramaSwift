@@ -146,6 +146,14 @@ public class OramaSwift {
         return orama.invokeMethod("insert", withArguments: [db, doc]).toString()
     }
 
+    public func upsert(_ doc: [AnyHashable: Any]) throws -> String {
+        guard let db = db else {
+            throw OramaSwiftError.databaseNotInitialized
+        }
+
+        return orama.invokeMethod("upsert", withArguments: [db, doc]).toString()
+    }
+
     public func remove(_ id: String) throws {
         guard let db = db else {
             throw OramaSwiftError.databaseNotInitialized
@@ -199,13 +207,18 @@ public class OramaSwift {
         return OramaSearchResults(count: count, elapsed: elapsedTime, hits: hits)
     }
 
-    public func getByID(_ id: String) throws ->  [AnyHashable: Any] {
+    public func getByID(_ id: String) throws ->  [AnyHashable: Any]? {
         guard let db = db else {
             throw OramaSwiftError.databaseNotInitialized
         }
 
         guard let result = orama.invokeMethod("getByID", withArguments: [db, id]) else {
             throw OramaSwiftError.jsExecutionError("Failed to execute getByID")
+        }
+
+        // Check if result is nil
+        if result.isUndefined || result.isNull {
+            return nil
         }
 
         guard let resultDict = result.toDictionary() else {

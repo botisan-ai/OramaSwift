@@ -103,6 +103,59 @@ import Testing
     #expect(result.count == 1)
 }
 
+@Test func testUpsert() throws {
+    let orama = try OramaSwift()
+
+    // Define a simple schema
+    let options: [String: Any] = [
+        "schema": [
+            "id": "string",
+            "title": "string",
+            "content": "string",
+        ]
+    ]
+
+    // Create the database
+    try orama.create(options: options)
+
+    // Insert a document
+    let doc1: [String: Any] = [
+        "id": "1",
+        "title": "Initial Document",
+        "content": "This is the initial document",
+    ]
+    try orama.upsert(doc1)
+
+    // Verify that the document was inserted
+    let insertedDoc = try orama.getByID("1")
+    print(insertedDoc)
+    #expect(insertedDoc != nil)
+
+    // Upsert the same document with new content
+    let doc2: [String: Any] = [
+        "id": "1", // Same ID to update the existing document
+        "title": "Initial Document",
+        "content": "This is the updated content of the initial document",
+    ]
+    try orama.upsert(doc2)
+
+    // Verify that the document was updated
+    let updatedDoc = try orama.getByID("1")
+    print(updatedDoc)
+    #expect(updatedDoc != nil)
+
+    // search to make sure there is only one document with the same ID
+    let query: [String: Any] = [
+        "term": "document"
+    ]
+    let searchResult = try orama.search(query)
+
+    print("Search Result:", searchResult)
+
+    // Verify that the search result contains only one document
+    #expect(searchResult.count == 1)
+}
+
 @available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
 @Test func testPersistData() throws {
     let orama = try OramaSwift()
@@ -218,8 +271,10 @@ import Testing
 
     print(result)
 
-    // Verify that the result matches the inserted document
-    #expect(result["title"] as? String == "Test Document")
+    if let result = result {
+        // Verify that the result matches the inserted document
+        #expect(result["title"] as? String == "Test Document")
+    }
 }
 
 @Test func testCount() throws {

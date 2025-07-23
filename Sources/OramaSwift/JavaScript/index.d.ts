@@ -1,5 +1,5 @@
 import { AnyOrama, AnySchema } from '@orama/orama';
-export { count, create, getByID, insert, remove, search } from '@orama/orama';
+export { count, create, getByID, insert, remove, search, upsert } from '@orama/orama';
 
 interface BreakIteratorResult {
     start: number;

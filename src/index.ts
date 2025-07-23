@@ -5,6 +5,7 @@ import {
   create,
   getByID,
   insert,
+  upsert,
   load,
   remove,
   save,
@@ -14,7 +15,7 @@ import {
 import { intlSegmenterTokenizer } from "./tokenizer";
 import type { BreakIterator } from "./intl-segmenter";
 
-export { create, insert, remove, search, getByID, count };
+export { create, insert, upsert, remove, search, getByID, count };
 
 // this file is based off  the @orama/plugin-data-persistence plugin
 // but stripped down to just the JSON serialization and deserialization

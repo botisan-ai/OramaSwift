@@ -31,7 +31,8 @@ var orama = (() => {
     remove: () => remove4,
     restore: () => restore,
     restoreMultilingual: () => restoreMultilingual,
-    search: () => search2
+    search: () => search2,
+    upsert: () => upsert
   });
 
   // node_modules/@orama/orama/dist/esm/components/tokenizer/languages.js
@@ -378,6 +379,15 @@ var orama = (() => {
     }
     return /* @__PURE__ */ new Set([...set1, ...set2]);
   }
+  function setDifference(set1, set2) {
+    const result = /* @__PURE__ */ new Set();
+    for (const value of set1) {
+      if (!set2.has(value)) {
+        result.add(value);
+      }
+    }
+    return result;
+  }
 
   // node_modules/@orama/orama/dist/esm/errors.js
   var allLanguages = SUPPORTED_LANGUAGES.join("\n - ");
@@ -683,6 +693,8 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
     "afterRemove",
     "beforeUpdate",
     "afterUpdate",
+    "beforeUpsert",
+    "afterUpsert",
     "beforeSearch",
     "afterSearch",
     "beforeInsertMultiple",
@@ -691,6 +703,8 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
     "afterRemoveMultiple",
     "beforeUpdateMultiple",
     "afterUpdateMultiple",
+    "beforeUpsertMultiple",
+    "afterUpsertMultiple",
     "beforeLoad",
     "afterLoad",
     "afterCreate"
@@ -2389,6 +2403,32 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
     return results;
   }
   function searchByWhereClause(index, tokenizer, filters, language) {
+    if ("and" in filters && filters.and && Array.isArray(filters.and)) {
+      const andFilters = filters.and;
+      if (andFilters.length === 0) {
+        return /* @__PURE__ */ new Set();
+      }
+      const results = andFilters.map((filter) => searchByWhereClause(index, tokenizer, filter, language));
+      return setIntersection(...results);
+    }
+    if ("or" in filters && filters.or && Array.isArray(filters.or)) {
+      const orFilters = filters.or;
+      if (orFilters.length === 0) {
+        return /* @__PURE__ */ new Set();
+      }
+      const results = orFilters.map((filter) => searchByWhereClause(index, tokenizer, filter, language));
+      return results.reduce((acc, set) => setUnion(acc, set), /* @__PURE__ */ new Set());
+    }
+    if ("not" in filters && filters.not) {
+      const notFilter = filters.not;
+      const allDocs = /* @__PURE__ */ new Set();
+      const docsStore = index.sharedInternalDocumentStore;
+      for (let i = 1; i <= docsStore.internalIdToId.length; i++) {
+        allDocs.add(i);
+      }
+      const notResult = searchByWhereClause(index, tokenizer, notFilter, language);
+      return setDifference(allDocs, notResult);
+    }
     const filterKeys = Object.keys(filters);
     const filtersMap = filterKeys.reduce((acc, key) => ({
       [key]: /* @__PURE__ */ new Set(),
@@ -3453,14 +3493,18 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
       afterRemove: [],
       beforeUpdate: [],
       afterUpdate: [],
+      beforeUpsert: [],
+      afterUpsert: [],
       beforeSearch: [],
       afterSearch: [],
       beforeInsertMultiple: [],
       afterInsertMultiple: [],
       beforeRemoveMultiple: [],
       afterRemoveMultiple: [],
-      afterUpdateMultiple: [],
       beforeUpdateMultiple: [],
+      afterUpdateMultiple: [],
+      beforeUpsertMultiple: [],
+      afterUpsertMultiple: [],
       afterCreate: [],
       formatElapsedTime: formatElapsedTime2,
       id,
@@ -4349,6 +4393,86 @@ Read more at https://docs.orama.com/open-source/plugins/plugin-secure-proxy#plug
       sorting: orama.sorter.save(orama.data.sorting),
       language: orama.tokenizer.language
     };
+  }
+
+  // node_modules/@orama/orama/dist/esm/methods/update.js
+  function update(orama, id, doc, language, skipHooks) {
+    const asyncNeeded = isAsyncFunction(orama.afterInsert) || isAsyncFunction(orama.beforeInsert) || isAsyncFunction(orama.afterRemove) || isAsyncFunction(orama.beforeRemove) || isAsyncFunction(orama.beforeUpdate) || isAsyncFunction(orama.afterUpdate);
+    if (asyncNeeded) {
+      return updateAsync(orama, id, doc, language, skipHooks);
+    }
+    return updateSync(orama, id, doc, language, skipHooks);
+  }
+  async function updateAsync(orama, id, doc, language, skipHooks) {
+    if (!skipHooks && orama.beforeUpdate) {
+      await runSingleHook(orama.beforeUpdate, orama, id);
+    }
+    await remove4(orama, id, language, skipHooks);
+    const newId = await insert3(orama, doc, language, skipHooks);
+    if (!skipHooks && orama.afterUpdate) {
+      await runSingleHook(orama.afterUpdate, orama, newId);
+    }
+    return newId;
+  }
+  function updateSync(orama, id, doc, language, skipHooks) {
+    if (!skipHooks && orama.beforeUpdate) {
+      runSingleHook(orama.beforeUpdate, orama, id);
+    }
+    remove4(orama, id, language, skipHooks);
+    const newId = insert3(orama, doc, language, skipHooks);
+    if (!skipHooks && orama.afterUpdate) {
+      runSingleHook(orama.afterUpdate, orama, newId);
+    }
+    return newId;
+  }
+
+  // node_modules/@orama/orama/dist/esm/methods/upsert.js
+  function upsert(orama, doc, language, skipHooks, options) {
+    const asyncNeeded = isAsyncFunction(orama.afterInsert) || isAsyncFunction(orama.beforeInsert) || isAsyncFunction(orama.afterRemove) || isAsyncFunction(orama.beforeRemove) || isAsyncFunction(orama.beforeUpdate) || isAsyncFunction(orama.afterUpdate) || isAsyncFunction(orama.beforeUpsert) || isAsyncFunction(orama.afterUpsert) || isAsyncFunction(orama.index.beforeInsert) || isAsyncFunction(orama.index.insert) || isAsyncFunction(orama.index.afterInsert);
+    if (asyncNeeded) {
+      return upsertAsync(orama, doc, language, skipHooks, options);
+    }
+    return upsertSync(orama, doc, language, skipHooks, options);
+  }
+  async function upsertAsync(orama, doc, language, skipHooks, options) {
+    const id = orama.getDocumentIndexId(doc);
+    if (typeof id !== "string") {
+      throw createError("DOCUMENT_ID_MUST_BE_STRING", typeof id);
+    }
+    if (!skipHooks && orama.beforeUpsert) {
+      await runSingleHook(orama.beforeUpsert, orama, id, doc);
+    }
+    const existingDoc = orama.documentsStore.get(orama.data.docs, id);
+    let resultId;
+    if (existingDoc) {
+      resultId = await update(orama, id, doc, language, skipHooks);
+    } else {
+      resultId = await insert3(orama, doc, language, skipHooks, options);
+    }
+    if (!skipHooks && orama.afterUpsert) {
+      await runSingleHook(orama.afterUpsert, orama, resultId, doc);
+    }
+    return resultId;
+  }
+  function upsertSync(orama, doc, language, skipHooks, options) {
+    const id = orama.getDocumentIndexId(doc);
+    if (typeof id !== "string") {
+      throw createError("DOCUMENT_ID_MUST_BE_STRING", typeof id);
+    }
+    if (!skipHooks && orama.beforeUpsert) {
+      runSingleHook(orama.beforeUpsert, orama, id, doc);
+    }
+    const existingDoc = orama.documentsStore.get(orama.data.docs, id);
+    let resultId;
+    if (existingDoc) {
+      resultId = update(orama, id, doc, language, skipHooks);
+    } else {
+      resultId = insert3(orama, doc, language, skipHooks, options);
+    }
+    if (!skipHooks && orama.afterUpsert) {
+      runSingleHook(orama.afterUpsert, orama, resultId, doc);
+    }
+    return resultId;
   }
 
   // node_modules/@orama/orama/dist/esm/types.js
